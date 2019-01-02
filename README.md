@@ -44,3 +44,19 @@ range查询文件，也可以获取文件的任意部分的信息，比如跳过
     对于一个大文件，如果你希望原子性的更新它的全部内容，那么GridFS将不合适；比如同时更新一
 个文件的多个chunk,因为MongoDB本身没有事务机制。
 </pre>
+
+![](https://i.imgur.com/dTY2OgB.png)
+
+<pre>
+写过程：
+
+    当把一个文件存储到GridFS时，如果文件大于chunksize （每个chunk块大小为256KB），会先将
+    文件按照chunk的大小分割成多个chunk块，最终将chunk块的信息存储在fs.chunks集合的多个文
+    档中。然后将文件信息存储在fs.files集合的唯一一份文档中。其中fs.chunks集合中多个文档中的
+    file_id字段对应fs.files集中文档”_id”字段。
+
+读过程：
+    读文件时，先根据查询条件在files集合中找到对应的文档，同时得到“_id”字段，再根据“_id”在
+    chunks集合中查询所有“files_id”等于“_id”的文档。最后根据“n”字段顺序读取chunk的“data”
+    字段数据，还原文件。
+</pre>
